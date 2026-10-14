@@ -304,7 +304,7 @@ where
 /// Implement generic_array::GenericSequence for Aligned sequences
 unsafe impl<A, T, N> generic_array::sequence::GenericSequence<T> for Aligned<A, GenericArray<T, N>>
 where
-    N: ArrayLength<T>,
+    N: ArrayLength,
     A: sealed::Alignment,
 {
     type Length = N;
@@ -326,9 +326,9 @@ unsafe impl<'a, A, N, K> generic_array::sequence::Split<u8, K>
     for &'a Aligned<A, GenericArray<u8, N>>
 where
     A: sealed::Alignment,
-    N: ArrayLength<u8> + ops::Sub<K>,
-    K: ArrayLength<u8> + PartialDiv<A::Num> + 'static,
-    Diff<N, K>: ArrayLength<u8>,
+    N: ArrayLength + ops::Sub<K>,
+    K: ArrayLength + PartialDiv<A::Num> + 'static,
+    Diff<N, K>: ArrayLength,
 {
     type First = &'a Aligned<A, GenericArray<u8, K>>;
     type Second = &'a Aligned<A, GenericArray<u8, Diff<N, K>>>;
@@ -354,9 +354,9 @@ unsafe impl<'a, A, N, K> generic_array::sequence::Split<u8, K>
     for &'a mut Aligned<A, GenericArray<u8, N>>
 where
     A: sealed::Alignment,
-    N: ArrayLength<u8> + ops::Sub<K>,
-    K: ArrayLength<u8> + PartialDiv<A::Num> + 'static,
-    Diff<N, K>: ArrayLength<u8>,
+    N: ArrayLength + ops::Sub<K>,
+    K: ArrayLength + PartialDiv<A::Num> + 'static,
+    Diff<N, K>: ArrayLength,
 {
     type First = &'a mut Aligned<A, GenericArray<u8, K>>;
     type Second = &'a mut Aligned<A, GenericArray<u8, Diff<N, K>>>;
@@ -427,7 +427,7 @@ impl<A, N> AsNeSlice for Aligned<A, GenericArray<u8, N>>
 where
     A: sealed::Alignment,
     A::Num: IsGreaterOrEqual<U8, Output = B1>,
-    N: ArrayLength<u8> + PartialDiv<U8>,
+    N: ArrayLength + PartialDiv<U8>,
 {
     #[inline]
     fn as_ne_u16_slice(&self) -> &[u16] {
@@ -490,7 +490,7 @@ impl<A, N> ConstantTimeEq for Aligned<A, GenericArray<u8, N>>
 where
     A: sealed::Alignment,
     A::Num: IsGreaterOrEqual<U8, Output = B1>,
-    N: ArrayLength<u8> + PartialDiv<U8>,
+    N: ArrayLength + PartialDiv<U8>,
 {
     #[inline]
     fn ct_eq(&self, other: &Self) -> Choice {
@@ -500,7 +500,7 @@ where
 
 /// Trait for types which can be viewed as aligned chunks of bytes
 /// This should generally just be, larger chunks of dumb bytes or similar.
-pub trait AsAlignedChunks<A: sealed::Alignment, M: ArrayLength<u8> + PartialDiv<A::Num>> {
+pub trait AsAlignedChunks<A: sealed::Alignment, M: ArrayLength + PartialDiv<A::Num>> {
     /// Break self into aligned chunks of size M.
     /// This is not required to cover all the bytes of Self,
     /// trailing bytes that don't fit may be left off.
@@ -521,8 +521,8 @@ where
     A: sealed::Alignment,
     A2: sealed::Alignment,
     A2::Num: IsLessOrEqual<A::Num, Output = B1>,
-    N: ArrayLength<u8>,
-    M: ArrayLength<u8> + PartialDiv<A2::Num>,
+    N: ArrayLength,
+    M: ArrayLength + PartialDiv<A2::Num>,
 {
     #[inline]
     fn as_aligned_chunks(&self) -> &[Aligned<A2, GenericArray<u8, M>>] {
@@ -630,23 +630,25 @@ mod testing {
 
     #[test]
     fn aligned_split() {
-        let x: A8Bytes<U24> = Aligned(
-            arr![u8; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
-        );
+        let x: A8Bytes<U24> = Aligned(arr![
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
+        ]);
 
         let (y, z) = <&A8Bytes<U24> as Split<u8, U8>>::split(&x);
-        assert_eq!(y, &Aligned(arr![u8; 0, 1, 2, 3, 4, 5, 6, 7]));
+        assert_eq!(y, &Aligned(arr![0, 1, 2, 3, 4, 5, 6, 7]));
         assert_eq!(
             z,
-            &Aligned(arr![u8; 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
+            &Aligned(arr![
+                8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
+            ])
         );
 
         let (v, w) = <&A8Bytes<U24> as Split<u8, U16>>::split(&x);
         assert_eq!(
             v,
-            &Aligned(arr![u8; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+            &Aligned(arr![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
         );
-        assert_eq!(w, &Aligned(arr![u8; 16, 17, 18, 19, 20, 21, 22, 23]));
+        assert_eq!(w, &Aligned(arr![16, 17, 18, 19, 20, 21, 22, 23]));
     }
 
     #[test]

@@ -7,8 +7,8 @@ keywords = ["alignment", "aligned", "array", "static"]
 license = "MIT OR Apache-2.0"
 name = "aligned-array"
 repository = "https://github.com/mobilecoinofficial/aligned-array"
-version = "1.0.1"
+version = "2.0.0"
 
 [dependencies]
-generic-array = { version = "0.14", default-features = false }
-subtle = { version = "2.4", default-features = false, optional = true }
+generic-array = { version = "1.4", default-features = false }
+subtle = { version = "2.6", default-features = false, optional = true }
